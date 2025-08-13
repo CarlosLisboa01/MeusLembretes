@@ -76,6 +76,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   registerServiceWorker();
   setupNotificationPermissionButton();
+  // Se SendPulse estiver ativo e permissões concedidas, capturamos a assinatura
+  if(isSendPulseActive() && 'serviceWorker' in navigator && Notification.permission === 'granted'){
+    captureSendPulseSubscription().catch(()=>{});
+  }
   wireForm();
   // Filtro de status configurado uma única vez
   $("#filtro-status").onchange = () => renderNotes();
@@ -84,6 +88,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function registerServiceWorker(){
+  // Se o SendPulse estiver carregado, ele gerencia o próprio service worker
+  if(isSendPulseActive()) return;
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
@@ -94,7 +100,12 @@ function setupNotificationPermissionButton(){
   btn.addEventListener('click', async () => {
     try{
       const perm = await Notification.requestPermission();
-      if(perm === 'granted') showToast('Notificações ativadas');
+      if(perm === 'granted'){
+        showToast('Notificações ativadas');
+        if(isSendPulseActive()){
+          await captureSendPulseSubscription();
+        }
+      }
       else showToast('Notificações bloqueadas');
     }catch{ showToast('Seu navegador não suporta notificações'); }
   });
@@ -124,6 +135,7 @@ function wireForm(){
       content: conteudo,
       remind_at: remindAt,
       status: 'pendente',
+      client_id: getClientId(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -262,7 +274,11 @@ function triggerNotification(note){
     badge: './icons/badge-72.png',
     data: { url: location.href }
   };
-
+  // Com SendPulse ativo, usamos Notification direto. Caso contrário, usamos nosso SW.
+  if(isSendPulseActive()){
+    new Notification(title, options);
+    return;
+  }
   if(navigator.serviceWorker?.controller){
     navigator.serviceWorker.controller.postMessage({ type: 'show-notification', title, options });
   } else {
@@ -303,6 +319,41 @@ function markAsNotified(key){
   const s = getNotifiedSet();
   s.add(key);
   saveNotifiedSet(s);
+}
+
+// SendPulse helpers
+function isSendPulseActive(){
+  return !!document.querySelector('script[src*="webpushs.com"]');
+}
+
+async function captureSendPulseSubscription(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub) return;
+    await saveSendPulseSubscription(sub);
+  }catch(err){ console.warn('Falha ao capturar subscription', err); }
+}
+
+async function saveSendPulseSubscription(subscription){
+  try{
+    if(!supabaseClient) return;
+    const payload = { client_id: getClientId(), endpoint: subscription.endpoint, subscription };
+    // Tenta upsert por endpoint
+    const { error } = await supabaseClient.from('sendpulse_subscribers')
+      .upsert(payload, { onConflict: 'endpoint' });
+    if(error) console.warn('Erro ao salvar assinatura SendPulse', error);
+  }catch(err){ console.warn(err); }
+}
+
+function getClientId(){
+  let id = localStorage.getItem('client_id');
+  if(!id){
+    id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+    localStorage.setItem('client_id', id);
+  }
+  return id;
 }
 
 
