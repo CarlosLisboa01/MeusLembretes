@@ -32,10 +32,14 @@ create table if not exists public.sendpulse_subscribers (
 );
 
 alter table public.sendpulse_subscribers enable row level security;
-create policy if not exists "sps_select_all" on public.sendpulse_subscribers for select using (true);
-create policy if not exists "sps_insert_all" on public.sendpulse_subscribers for insert with check (true);
-create policy if not exists "sps_update_all" on public.sendpulse_subscribers for update using (true);
-create policy if not exists "sps_delete_all" on public.sendpulse_subscribers for delete using (true);
+drop policy if exists "sps_select_all" on public.sendpulse_subscribers;
+drop policy if exists "sps_insert_all" on public.sendpulse_subscribers;
+drop policy if exists "sps_update_all" on public.sendpulse_subscribers;
+drop policy if exists "sps_delete_all" on public.sendpulse_subscribers;
+create policy "sps_select_all" on public.sendpulse_subscribers for select using (true);
+create policy "sps_insert_all" on public.sendpulse_subscribers for insert with check (true);
+create policy "sps_update_all" on public.sendpulse_subscribers for update using (true);
+create policy "sps_delete_all" on public.sendpulse_subscribers for delete using (true);
 create unique index if not exists sps_endpoint_unique on public.sendpulse_subscribers (endpoint);
 
 
