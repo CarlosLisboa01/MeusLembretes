@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anotações & Lembretes</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <meta name="theme-color" content="#ff4da6" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Minhas Anotações</h1>
+      <div class="header-actions">
+        <button id="btn-permitir-notificacoes" class="btn btn-outline">Permitir notificações</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>Criar anotação</h2>
+        <div id="config-alert" class="alert alert-warning" hidden>
+          Configure o Supabase em <code>app.js</code> (URL e ANON KEY) para salvar seus dados na nuvem.
+        </div>
+        <form id="form-nota" autocomplete="off">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="titulo">Título</label>
+              <input type="text" id="titulo" name="titulo" placeholder="Ex.: Ideias para o projeto" required />
+            </div>
+            <div class="form-field full">
+              <label for="conteudo">Anotação</label>
+              <textarea id="conteudo" name="conteudo" rows="4" placeholder="Escreva aqui..."></textarea>
+            </div>
+
+            <fieldset class="form-field full">
+              <legend>Lembrete</legend>
+              <div class="reminder-row">
+                <label class="radio">
+                  <input type="radio" name="tipo-lembrete" value="dias" checked />
+                  Lembrar em
+                </label>
+                <input type="number" id="dias" min="1" step="1" value="1" class="inline-input" />
+                <span>dia(s)</span>
+              </div>
+              <div class="reminder-row">
+                <label class="radio">
+                  <input type="radio" name="tipo-lembrete" value="data" />
+                  Lembrar em
+                </label>
+                <input type="datetime-local" id="datahora" class="inline-input" />
+              </div>
+            </fieldset>
+
+            <div class="form-actions full">
+              <button type="submit" class="btn btn-primary">Salvar anotação</button>
+              <button type="reset" class="btn btn-ghost">Limpar</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="list-header">
+          <h2>Minhas notas</h2>
+          <div class="filters">
+            <select id="filtro-status">
+              <option value="todas">Todas</option>
+              <option value="pendentes">Pendentes</option>
+              <option value="concluidas">Concluídas</option>
+            </select>
+          </div>
+        </div>
+        <ul id="lista-notas" class="notes"></ul>
+        <div id="empty-state" class="empty" hidden>Nenhuma anotação ainda.</div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./app.js"></script>
+  </body>
+  </html>
+
+
